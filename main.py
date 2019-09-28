@@ -5,11 +5,12 @@ from __future__ import print_function
 import tensorflow as tf
 
 from utils import train, train_test_split
+from modules import test_spectral_norm
 
 flags = tf.flags
 
 # data config
-flags.DEFINE_string("mode", "train", "Running mode: train/download_data")
+flags.DEFINE_string("mode", "train", "Running mode: train/data/sn")
 flags.DEFINE_string("dataset", "mnist", "The dataset to experiment with")
 
 flags.DEFINE_string("save_dir", "model", "Model directory")
@@ -35,8 +36,10 @@ def main(_):
   config = flags.FLAGS
   if config.mode == "train":
     train(config)
-  elif config.mode == "debug":
+  elif config.mode == "data":
     train_test_split(config)
+  elif config.mode == "sn":
+    test_spectral_norm()
 
 
 if __name__ == "__main__":

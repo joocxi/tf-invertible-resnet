@@ -2,9 +2,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
-from utils import SpectralNorm
+from modules.spectral_norm import spectral_norm, spectral_norm_conv
 
 
 class Conv2D:
@@ -34,7 +34,12 @@ class Conv2D:
       self.bias = tf.get_variable("bias", [out_channel], initializer=tf.constant_initializer(0.0))
 
     if self.use_sn:
-      self.weight_sn = SpectralNorm(self.weight, coeff, power_iter)
+      if kernel_size == 1:
+        self.weight_sn = spectral_norm(self.weight, coeff, power_iter)
+      else:
+        self.weight_sn = spectral_norm_conv(self.weight, coeff, power_iter,
+                                            in_shape=None, out_shape=None,
+                                            stride=stride, padding=padding)
 
   def __call__(self, x):
     if self.use_sn:

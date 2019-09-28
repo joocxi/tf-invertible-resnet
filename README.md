@@ -13,7 +13,7 @@ pip install -r requirements.txt
 ## Running
 To test loading dataset 
 ```bash
-python main.py --mode download_data --dataset <dataset-name>
+python main.py --mode data --dataset <dataset-name>
 ```
 
 **References**
