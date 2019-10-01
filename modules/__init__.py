@@ -1,2 +1,1 @@
 from modules.iresnet_block import InvertibleBlock
-from modules.spectral_norm_test import test_spectral_norm

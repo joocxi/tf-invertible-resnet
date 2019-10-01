@@ -5,7 +5,7 @@ from __future__ import print_function
 import tensorflow as tf
 
 from utils import train, train_test_split
-from modules import test_spectral_norm
+from test import test_spectral_norm, test_trace_approximation
 
 flags = tf.flags
 
@@ -40,6 +40,8 @@ def main(_):
     train_test_split(config)
   elif config.mode == "sn":
     test_spectral_norm()
+  elif config.mode == "trace":
+    test_trace_approximation()
 
 
 if __name__ == "__main__":

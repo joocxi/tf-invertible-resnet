@@ -21,6 +21,8 @@ class IResNet:
     assert len(block_list) == len(stride_list) == len(channel_list)
     self.coeff = coeff
     self.power_iter = power_iter
+    self.num_trace_samples = num_trace_samples
+    self.num_series_terms = num_series_terms
 
     self.blocks = []
     for idx, (num_block, stride, num_channel) in \
@@ -47,9 +49,13 @@ class IResNet:
                                            stride,
                                            num_channel,
                                            self.coeff,
-                                           self.power_iter))
+                                           self.power_iter,
+                                           self.num_trace_samples,
+                                           self.num_series_terms))
 
   def inverse(self, out):
     x = out
-    # TODO:
+
+    for block in reversed(self.blocks):
+      x = block.inverse(x)
     return x

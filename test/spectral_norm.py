@@ -8,8 +8,8 @@ import tensorflow.compat.v1 as tf
 from modules.spectral_norm import spectral_norm, spectral_norm_conv
 
 
-def unfold_kernel(filter, in_shape):
-  m = int((filter.shape[0] - 1) / 2)
+def unfold_kernel(kernel, in_shape):
+  m = int((kernel.shape[0] - 1) / 2)
 
   transform_mat = np.zeros([in_shape ** 2, in_shape ** 2])
   for in_row in range(in_shape):
@@ -17,14 +17,14 @@ def unfold_kernel(filter, in_shape):
       mat_row = in_row * in_shape + in_col
 
       # Then, we need to parse values of the filter to each row
-      for kernel_row in range(filter.shape[0]):
-        for kernel_col in range(filter.shape[1]):
+      for kernel_row in range(kernel.shape[0]):
+        for kernel_col in range(kernel.shape[1]):
           r = in_row + kernel_row - m
           c = in_col + kernel_col - m
 
           if 0 <= r < in_shape and 0 <= c < in_shape:
             mat_col = r * in_shape + c
-            transform_mat[mat_row, mat_col] = filter[kernel_row, kernel_col]
+            transform_mat[mat_row, mat_col] = kernel[kernel_row, kernel_col]
 
   return transform_mat.T
 
