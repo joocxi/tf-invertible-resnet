@@ -33,7 +33,7 @@ class IResNet:
   def __call__(self, x):
 
     for block in self.blocks:
-      x = block(x)
+      x, trace = block(x)
 
     return x
 

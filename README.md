@@ -15,5 +15,23 @@ To test loading dataset
 ```bash
 python main.py --mode data --dataset <dataset-name>
 ```
+To test spectral normalization implementation
+```bash
+python main.py --mode sn
+```
+
+To test trace approximation
+```bash
+python main.py --mode trace
+```
+## TODOs
+- [x] General architecture
+- [x] Spectral norm
+- [x] Trace approximation
+- [ ] Loss functions
+- [ ] Training/testing pipeline
+- [ ] Dimension splitting
+- [ ] Actnorm (optional)
+- [ ] To TensorFlow 2.0
 
 **References**

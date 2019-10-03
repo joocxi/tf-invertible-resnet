@@ -17,7 +17,8 @@ class InvertibleBlock:
                num_trace_samples,
                num_series_terms,
                activation=tf.nn.relu,
-               use_sn=True
+               use_sn=True,
+               use_actnorm=True
                ):
 
     in_channel, height, width = in_shape
@@ -52,6 +53,10 @@ class InvertibleBlock:
                               coeff=coeff,
                               power_iter=power_iter))
 
+    if use_actnorm:
+      # TODO:
+      pass
+
 
   def residual_block(self, x):
     for layer in self.layers:
@@ -61,9 +66,9 @@ class InvertibleBlock:
   def __call__(self, x, ignore_logdet=False):
     """
 
-    :param x: (batch, height, width, channel)
-    :param ignore_logdet:
-    :return:
+    :param x: (batch_size, height, width, num_channel)
+    :param ignore_logdet: boolean
+    :return trace: (batch_size,)
     """
 
     Gx = self.residual_block(x)
@@ -73,9 +78,9 @@ class InvertibleBlock:
                                self.num_series_terms)
 
     if ignore_logdet:
-      return Gx, None
+      return x + Gx, None
     else:
-      return Gx, trace
+      return x + Gx, trace
 
   def inverse(self, out, fixed_point_iter=100):
     x = out
@@ -92,7 +97,7 @@ class InvertibleBlock:
     u_shape = x.shape.as_list()
     u_shape.insert(1, num_trace_samples)
 
-    # shape (batch, n, h, w, c)
+    # shape (batch_size, num_sample, height, width, num_channel)
     u = tf.random.normal(u_shape)
 
     def loop_trace_samples(n, trace_total):
@@ -103,8 +108,8 @@ class InvertibleBlock:
         """
 
         :param k:
-        :param output_grads: (batch_size, h, w, c)
-        :param trace: (batch_size, )
+        :param output_grads: (batch_size, height, width, num_channel)
+        :param trace: (batch_size,)
         :return:
         """
         grads = tf.gradients(Gx, x, output_grads)[0]
