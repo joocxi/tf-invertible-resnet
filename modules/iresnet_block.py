@@ -16,18 +16,19 @@ class InvertibleBlock:
                power_iter,
                num_trace_samples,
                num_series_terms,
-               activation=tf.nn.relu,
+               activation=tf.nn.elu,
                use_sn=True,
                use_actnorm=True
                ):
 
-    in_channel, height, width = in_shape
+    _, height, width, in_channel = in_shape
 
     self.num_trace_samples = num_trace_samples
     self.num_series_terms = num_series_terms
 
     self.layers = []
     self.layers.append(Conv2D(name="a",
+                              in_shape=in_shape,
                               in_channel=in_channel,
                               out_channel=num_channel,
                               kernel_size=3,
@@ -37,6 +38,7 @@ class InvertibleBlock:
 
     self.layers.append(activation)
     self.layers.append(Conv2D(name="b",
+                              in_shape=in_shape,
                               in_channel=num_channel,
                               out_channel=num_channel,
                               kernel_size=1,
@@ -46,6 +48,7 @@ class InvertibleBlock:
 
     self.layers.append(activation)
     self.layers.append(Conv2D(name="c",
+                              in_shape=in_shape,
                               in_channel=num_channel,
                               out_channel=in_channel,
                               kernel_size=3,
@@ -85,7 +88,7 @@ class InvertibleBlock:
   def inverse(self, out, fixed_point_iter=100):
     x = out
     for i in range(fixed_point_iter):
-      x = x - self.residual_block(x)
+      x = out - self.residual_block(x)
 
     return x
 

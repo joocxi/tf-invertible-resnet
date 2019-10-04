@@ -14,6 +14,7 @@ def spectral_norm(w,
   :param w: conv weight of shape (k_height, k_width, c_in, c_out)
   :param coeff:
   :param power_iter:
+  :param debug:
   :return:
   """
 
@@ -23,10 +24,11 @@ def spectral_norm(w,
   w_reshaped = tf.reshape(w, [-1, w_shape[-1]])
 
   # init u with shape (1, c_out)
-  u_normed = tf.get_variable("weight_u",
-                             shape=[1, w_shape[-1]],
-                             initializer=tf.truncated_normal_initializer(),
-                             trainable=False)
+  with tf.variable_scope("norm", reuse=tf.AUTO_REUSE):
+    u_normed = tf.get_variable("weight_u",
+                               shape=[1, w_shape[-1]],
+                               initializer=tf.truncated_normal_initializer(),
+                               trainable=False)
   v_normed = None
 
   for i in range(power_iter):
@@ -43,10 +45,11 @@ def spectral_norm(w,
 
   sigma = tf.matmul(tf.matmul(v_normed, w_reshaped), tf.transpose(u_normed))
 
-  w_normed = w / sigma
-
   if debug:
     return sigma
+
+  factor = tf.maximum(tf.ones_like(w), sigma / coeff)
+  w_normed = w / factor
 
   return w_normed
 
@@ -68,14 +71,16 @@ def spectral_norm_conv(w,
   :param out_shape:
   :param stride:
   :param padding:
+  :param debug:
   :return:
   """
 
   # init u with shape: out_shape
-  u_normed = tf.get_variable("weight_u",
-                             shape=out_shape,
-                             initializer=tf.truncated_normal_initializer(),
-                             trainable=False)
+  with tf.variable_scope("norm", reuse=tf.AUTO_REUSE):
+    u_normed = tf.get_variable("weight_conv_u",
+                               shape=out_shape,
+                               initializer=tf.truncated_normal_initializer(),
+                               trainable=False)
 
   v_normed = None
 
@@ -112,6 +117,7 @@ def spectral_norm_conv(w,
   if debug:
     return sigma
 
-  w_normed = w / sigma
+  factor = tf.maximum(tf.ones_like(w), sigma / coeff)
+  w_normed = w / factor
 
   return w_normed

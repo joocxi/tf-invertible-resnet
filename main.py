@@ -5,7 +5,7 @@ from __future__ import print_function
 import tensorflow as tf
 
 from utils import train, train_test_split
-from test import test_spectral_norm, test_trace_approximation
+from test import test_spectral_norm, test_trace_approximation, test_block_inversion
 
 flags = tf.flags
 
@@ -17,9 +17,11 @@ flags.DEFINE_string("save_dir", "model", "Model directory")
 flags.DEFINE_string("data_dir", "data", "Data directory")
 
 # training config
+flags.DEFINE_integer("seed", 2019, "Random seed")
 flags.DEFINE_integer("batch_size", 32, "Batch size")
 flags.DEFINE_integer("epochs", 10, "Num epochs")
 flags.DEFINE_float("lr", 0.1, "Learning rate")
+flags.DEFINE_float('weight_decay', 5e-4, "Coefficient for weight decay")
 
 # invertible residual network config
 flags.DEFINE_list("block_list", [7, 7, 7], "Block list")
@@ -30,6 +32,10 @@ flags.DEFINE_float("coeff", 0.9, "Scaling coefficient")
 flags.DEFINE_integer("power_iter", 1, "Number of power iteration for spectral normalization")
 flags.DEFINE_integer("num_trace_samples", 2, "Number of samples for Hutchinson trace estimator")
 flags.DEFINE_integer("num_series_terms", 5, "Number of power series terms")
+
+# TensorBoard config
+flags.DEFINE_integer("save_summary_period", 100, "")
+flags.DEFINE_integer("save_model_period", 100, "")
 
 
 def main(_):
@@ -42,6 +48,8 @@ def main(_):
     test_spectral_norm()
   elif config.mode == "trace":
     test_trace_approximation()
+  elif config.mode == "inverse":
+    test_block_inversion()
 
 
 if __name__ == "__main__":

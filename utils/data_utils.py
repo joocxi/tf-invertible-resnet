@@ -6,6 +6,6 @@ import tensorflow_datasets as tfds
 
 
 def train_test_split(config):
-  train_split = tfds.load(config.dataset, split="train", data_dir=config.data_dir)
+  train_split = tfds.load(config.dataset, split="train", data_dir=config.data_dir, shuffle_files=False)
   test_split = tfds.load(config.dataset, split="test", data_dir=config.data_dir)
   return train_split, test_split

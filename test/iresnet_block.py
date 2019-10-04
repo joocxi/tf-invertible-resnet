@@ -44,3 +44,35 @@ def test_trace_approximation():
   _out, _logdet = sess.run([out, logdet])
   print("Mean of log determinant approximation: {}".format(np.mean(_out)))
   print("Log determinant by tf.linalg.logdet  : {}".format(_logdet))
+
+
+def test_block_inversion():
+  batch_size = 13
+  height, width = 32, 32
+  num_channel = 3
+  block = InvertibleBlock(
+    in_shape=(batch_size, height, width, num_channel),
+    stride=None,
+    num_channel=num_channel, # channel of intermediate layers
+    coeff=0.97,
+    power_iter=1,
+    num_trace_samples=2,
+    num_series_terms=2,
+    activation=tf.nn.elu,
+    use_sn=True,
+    use_actnorm=False
+  )
+
+  x = tf.random.normal(shape=(batch_size, height, width, num_channel))
+
+  out, trace = block(x)
+
+  x_inverse = block.inverse(out)
+
+  diff = tf.reduce_mean(tf.abs(x - x_inverse))
+
+  sess = tf.InteractiveSession()
+  sess.run(tf.global_variables_initializer())
+
+  _diff = sess.run(diff)
+  print("Inversion difference is: {}".format(_diff))

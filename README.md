@@ -24,6 +24,11 @@ To test trace approximation
 ```bash
 python main.py --mode trace
 ```
+
+To test block inversion
+```bash
+python main.py --mode inverse
+```
 ## TODOs
 - [x] General architecture
 - [x] Spectral norm

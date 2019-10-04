@@ -1,2 +1,2 @@
-from test.iresnet_block import test_trace_approximation
+from test.iresnet_block import test_trace_approximation, test_block_inversion
 from test.spectral_norm import test_spectral_norm

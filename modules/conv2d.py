@@ -10,6 +10,7 @@ from modules.spectral_norm import spectral_norm, spectral_norm_conv
 class Conv2D:
   def __init__(self,
                name,
+               in_shape,
                in_channel,
                out_channel,
                kernel_size,
@@ -38,7 +39,7 @@ class Conv2D:
         self.weight_sn = spectral_norm(self.weight, coeff, power_iter)
       else:
         self.weight_sn = spectral_norm_conv(self.weight, coeff, power_iter,
-                                            in_shape=None, out_shape=None,
+                                            in_shape=in_shape, out_shape=in_shape,
                                             stride=stride, padding=padding)
 
   def __call__(self, x):
