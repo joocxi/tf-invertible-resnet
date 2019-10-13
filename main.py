@@ -2,10 +2,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
-from utils import train, train_test_split
-from test import test_spectral_norm, test_trace_approximation, test_block_inversion
+from utils import train, download_dataset
+from test import test_spectral_norm, test_trace_approximation,\
+  test_block_inversion, test_iresnet
 
 flags = tf.flags
 
@@ -13,15 +14,17 @@ flags = tf.flags
 flags.DEFINE_string("mode", "train", "Running mode: train/data/sn")
 flags.DEFINE_string("dataset", "mnist", "The dataset to experiment with")
 
-flags.DEFINE_string("save_dir", "model", "Model directory")
+flags.DEFINE_string("checkpoint_dir", "ckpt", "Model directory")
 flags.DEFINE_string("data_dir", "data", "Data directory")
 
 # training config
 flags.DEFINE_integer("seed", 2019, "Random seed")
 flags.DEFINE_integer("batch_size", 32, "Batch size")
 flags.DEFINE_integer("epochs", 10, "Num epochs")
-flags.DEFINE_float("lr", 0.1, "Learning rate")
+flags.DEFINE_float("learning_rate", 3e-4, "Learning rate")
 flags.DEFINE_float('weight_decay', 5e-4, "Coefficient for weight decay")
+flags.DEFINE_integer("train_steps", 10000, "Num training steps")
+flags.DEFINE_integer("viz_steps", 50, "Num steps at which do visualization")
 
 # invertible residual network config
 flags.DEFINE_list("block_list", [7, 7, 7], "Block list")
@@ -36,16 +39,25 @@ flags.DEFINE_integer("num_series_terms", 5, "Number of power series terms")
 # TensorBoard config
 flags.DEFINE_integer("save_summary_period", 100, "")
 flags.DEFINE_integer("save_model_period", 100, "")
+flags.DEFINE_bool("delete_existing", True, "")
 
 
 def main(_):
   config = flags.FLAGS
   if config.mode == "train":
     train(config)
-  elif config.mode == "data":
-    train_test_split(config)
+  elif config.mode == "debug":
+    config.train_steps = 1
+    config.viz_steps = 1
+    config.block_list = [2, 2, 2]
+    config.channel_list = [3, 4, 5]
+    train(config, debug=True)
+  elif config.mode == "prepare":
+    download_dataset(config)
   elif config.mode == "sn":
     test_spectral_norm()
+  elif config.mode == "iresnet":
+    test_iresnet()
   elif config.mode == "trace":
     test_trace_approximation()
   elif config.mode == "inverse":
@@ -53,4 +65,4 @@ def main(_):
 
 
 if __name__ == "__main__":
-  tf.compat.v1.app.run()
+  tf.app.run()

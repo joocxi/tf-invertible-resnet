@@ -24,8 +24,8 @@ def spectral_norm(w,
   w_reshaped = tf.reshape(w, [-1, w_shape[-1]])
 
   # init u with shape (1, c_out)
-  with tf.variable_scope("norm", reuse=tf.AUTO_REUSE):
-    u_normed = tf.get_variable("weight_u",
+  with tf.variable_scope("norm"):
+    u_normed = tf.get_variable("u",
                                shape=[1, w_shape[-1]],
                                initializer=tf.truncated_normal_initializer(),
                                trainable=False)
@@ -67,8 +67,8 @@ def spectral_norm_conv(w,
   :param w: conv weight of shape (k_height, k_width, c_in, c_out)
   :param coeff:
   :param power_iter:
-  :param in_shape: (
-  :param out_shape:
+  :param in_shape: (batch_size, width, height, in_channels)
+  :param out_shape: (batch_size, width, height, out_channels)
   :param stride:
   :param padding:
   :param debug:
@@ -76,8 +76,8 @@ def spectral_norm_conv(w,
   """
 
   # init u with shape: out_shape
-  with tf.variable_scope("norm", reuse=tf.AUTO_REUSE):
-    u_normed = tf.get_variable("weight_conv_u",
+  with tf.variable_scope("norm"):
+    u_normed = tf.get_variable("u_conv",
                                shape=out_shape,
                                initializer=tf.truncated_normal_initializer(),
                                trainable=False)
@@ -85,7 +85,7 @@ def spectral_norm_conv(w,
   v_normed = None
 
   for i in range(power_iter):
-
+    # shape: (batch_size, width, height, in_channels)
     v = tf.nn.conv2d_transpose(u_normed,
                                filter=w,
                                output_shape=in_shape,
@@ -94,6 +94,7 @@ def spectral_norm_conv(w,
     v_normed = tf.math.l2_normalize(tf.reshape(v, [1, -1]))
     v_normed = tf.reshape(v_normed, v.shape)
 
+    # shape: (batch_size, width, height, out_channels)
     u = tf.nn.conv2d(v_normed,
                      filter=w,
                      strides=stride,

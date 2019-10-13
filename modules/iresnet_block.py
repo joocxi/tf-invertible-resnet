@@ -20,8 +20,21 @@ class InvertibleBlock:
                use_sn=True,
                use_actnorm=True
                ):
+    """
 
-    _, height, width, in_channel = in_shape
+    :param in_shape: (batch_size, height, width, channels)
+    :param stride:
+    :param num_channel:
+    :param coeff:
+    :param power_iter:
+    :param num_trace_samples:
+    :param num_series_terms:
+    :param activation:
+    :param use_sn:
+    :param use_actnorm:
+    """
+
+    batch_size, height, width, in_channel = in_shape
 
     self.num_trace_samples = num_trace_samples
     self.num_series_terms = num_series_terms
@@ -29,16 +42,17 @@ class InvertibleBlock:
     self.layers = []
     self.layers.append(Conv2D(name="a",
                               in_shape=in_shape,
-                              in_channel=in_channel,
-                              out_channel=num_channel,
+                              in_channel=in_channel, # data_channel
+                              out_channel=num_channel, # intermediate channels
                               kernel_size=3,
                               use_sn=use_sn,
                               coeff=coeff,
                               power_iter=power_iter))
 
     self.layers.append(activation)
+    int_shape = (batch_size, height, width, num_channel)
     self.layers.append(Conv2D(name="b",
-                              in_shape=in_shape,
+                              in_shape=int_shape,
                               in_channel=num_channel,
                               out_channel=num_channel,
                               kernel_size=1,
@@ -48,7 +62,7 @@ class InvertibleBlock:
 
     self.layers.append(activation)
     self.layers.append(Conv2D(name="c",
-                              in_shape=in_shape,
+                              in_shape=int_shape,
                               in_channel=num_channel,
                               out_channel=in_channel,
                               kernel_size=3,
@@ -97,15 +111,15 @@ class InvertibleBlock:
                     num_trace_samples=2,
                     num_power_series_terms=2):
 
-    u_shape = x.shape.as_list()
-    u_shape.insert(1, num_trace_samples)
+    u_shape = tf.shape(x)
+    u_shape = tf.concat([u_shape, [num_trace_samples]], axis=0)
 
-    # shape (batch_size, num_sample, height, width, num_channel)
+    # shape (batch_size, height, width, num_channel, num_sample)
     u = tf.random.normal(u_shape)
 
     def loop_trace_samples(n, trace_total):
 
-      u_reshaped = tf.reshape(u[:, n], (u_shape[0], -1, 1))
+      u_reshaped = tf.reshape(u[..., n], (u_shape[0], -1, 1))
 
       def loop_series_terms(k, output_grads, trace):
         """
@@ -127,7 +141,7 @@ class InvertibleBlock:
       _, _, trace_by_sample = tf.while_loop(
         cond=lambda k, _1, _2: k < num_power_series_terms,
         body=loop_series_terms,
-        loop_vars=[tf.constant(0, dtype=tf.int32), u[:, n], tf.zeros(shape=u_shape[0])]
+        loop_vars=[tf.constant(0, dtype=tf.int32), u[..., n], tf.zeros(shape=u_shape[0])]
       )
 
       return n + 1, trace_total + trace_by_sample

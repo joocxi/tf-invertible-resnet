@@ -30,17 +30,20 @@ class Conv2D:
     weight_shape = [kernel_size, kernel_size, in_channel, out_channel]
     weight_initializer = tf.initializers.truncated_normal()
 
+    batch_size, height, width, _ = in_shape
+    out_shape = (batch_size, height, width, out_channel)
+
     with tf.variable_scope('conv%s' % name):
       self.weight = tf.get_variable("weight", shape=weight_shape, initializer=weight_initializer)
       self.bias = tf.get_variable("bias", [out_channel], initializer=tf.constant_initializer(0.0))
 
-    if self.use_sn:
-      if kernel_size == 1:
-        self.weight_sn = spectral_norm(self.weight, coeff, power_iter)
-      else:
-        self.weight_sn = spectral_norm_conv(self.weight, coeff, power_iter,
-                                            in_shape=in_shape, out_shape=in_shape,
-                                            stride=stride, padding=padding)
+      if self.use_sn:
+        if kernel_size == 1:
+          self.weight_sn = spectral_norm(self.weight, coeff, power_iter)
+        else:
+          self.weight_sn = spectral_norm_conv(self.weight, coeff, power_iter,
+                                              in_shape=in_shape, out_shape=out_shape,
+                                              stride=stride, padding=padding)
 
   def __call__(self, x):
     if self.use_sn:

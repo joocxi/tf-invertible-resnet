@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import tensorflow.compat.v1 as tf
 import tensorflow_probability as tfp
+import numpy as np
 
 from modules import InvertibleBlock
 
@@ -20,7 +21,7 @@ class IResNet:
                power_iter):
     """
 
-    :param in_shape: (height, width, in_channel)
+    :param in_shape: (batch_size, height, width, in_channel)
     :param block_list:
     :param stride_list:
     :param channel_list:
@@ -35,16 +36,22 @@ class IResNet:
     self.power_iter = power_iter
     self.num_trace_samples = num_trace_samples
     self.num_series_terms = num_series_terms
+    self.in_shape = in_shape
 
     self.blocks = []
     for idx, (num_block, stride, num_channel) in \
-        enumerate(zip((block_list, stride_list, channel_list))):
+        enumerate(zip(block_list, stride_list, channel_list)):
       with tf.variable_scope('stack%d' % (idx + 1)):
         self.create_stack(num_block, stride, num_channel, in_shape)
 
     # TODO:
-    in_dim = None
-    self.prior = tfp.distributions.Normal(loc=tf.zeros(in_dim), scale=tf.zeros(in_dim))
+    in_dim = np.prod(in_shape[1:])
+    self.batch_size = in_shape[0]
+
+    with tf.variable_scope('prior'):
+      loc = tf.get_variable("loc", shape=[in_dim], initializer=tf.constant_initializer(0))
+      log_scale = tf.get_variable("scale", shape=[in_dim], initializer=tf.constant_initializer(0))
+      self.prior = tfp.distributions.Normal(loc=loc, scale=tf.exp(log_scale))
 
   def __call__(self, x):
 
@@ -60,7 +67,9 @@ class IResNet:
 
     log_prob_x = log_prob_z + trace
 
-    return z, log_prob_x
+    loss = - log_prob_x / float(np.log(2.) * np.prod(self.in_shape[1:])) + 8
+
+    return z, tf.reduce_mean(loss)
 
   def inverse(self, out):
     x = out
@@ -86,4 +95,8 @@ class IResNet:
                                            self.num_series_terms))
 
   def log_prob(self, z):
-    return self.prior.log_prob(z)
+
+    z_reshaped = tf.reshape(z, (self.batch_size, -1))
+    log_prob = self.prior.log_prob(z_reshaped)
+    log_prob = tf.reduce_sum(log_prob, axis=-1)
+    return log_prob
