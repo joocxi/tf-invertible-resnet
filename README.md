@@ -13,7 +13,7 @@ pip install -r requirements.txt
 ## Running
 To prepare dataset 
 ```bash
-python main.py --mode data --dataset <dataset-name>
+python main.py --mode prepare --dataset <dataset-name>
 ```
 To test spectral normalization
 ```bash
@@ -47,7 +47,10 @@ python main.py --mode debug
 - [x] Block inversion
 - [x] Loss functions
 - [x] Training pipeline
+- [ ] Multi-scale
+- [ ] Injective padding
 - [ ] Dimension splitting
+- [ ] Training results
 - [ ] Actnorm (optional)
 - [ ] To TensorFlow 2.0
 
