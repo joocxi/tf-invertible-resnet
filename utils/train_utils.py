@@ -4,68 +4,65 @@ from __future__ import print_function
 
 
 import tensorflow.compat.v1 as tf
-from tqdm import tqdm
 
 from model import IResNet
-from utils.data_utils import train_test_split
+from utils.data_utils import build_input_fns, build_fake_input_fns
 
 
-def train(config):
-  train_data, test_data = train_test_split(config)
+def model_fn(features, labels, mode, params, config):
+  del labels, config
 
-  train_data = train_data.repeat().shuffle(1024).batch(config.batch_size)
-  train_data = train_data.prefetch(tf.data.experimental.AUTOTUNE)
+  model = IResNet(in_shape= (32, 28, 28, 1),
+                  block_list=params.block_list,
+                  stride_list=params.stride_list,
+                  channel_list=params.channel_list,
+                  num_trace_samples=params.num_trace_samples,
+                  num_series_terms=params.num_series_terms,
+                  coeff=params.coeff,
+                  power_iter=params.power_iter)
 
-  handle = tf.placeholder(tf.string, shape=[])
-  iterator = tf.data.Iterator.from_string_handle(handle,
-                                                 tf.data.get_output_types(train_data),
-                                                 tf.data.get_output_shapes(train_data))
+  z, loss = model(features)
 
-  train_iterator = tf.data.make_one_shot_iterator(train_data)
-  val_iterator = tf.data.make_one_shot_iterator(test_data)
+  global_step = tf.train.get_or_create_global_step()
+  learning_rate = tf.train.cosine_decay(
+    params.learning_rate, global_step, params.train_steps)
 
-  sess_config = tf.ConfigProto(allow_soft_placement=True)
-  sess_config.gpu_options.allow_growth = True
+  optimizer = tf.train.AdamOptimizer(learning_rate)
+  train_op = optimizer.minimize(loss, global_step=global_step)
 
-  x, _ = iterator.get_next()
+  return tf.estimator.EstimatorSpec(
+    mode=mode,
+    loss=loss,
+    train_op=train_op
+  )
 
-  model = IResNet(in_shape=x.get_shape(),
-                  block_list=config.block_list,
-                  stride_list=config.stride_list,
-                  channel_list=config.channel_list,
-                  num_trace_samples=config.num_trace_samples,
-                  num_series_terms=config.num_series_terms,
-                  coeff=config.coeff,
-                  power_iter=config.power_iter)
 
-  z, loss = model(x)
+def train(config, debug=False):
 
-  with tf.Session(config=sess_config) as sess:
+  if config.delete_existing and tf.io.gfile.exists(config.checkpoint_dir):
+    tf.logging.warn("Deleting old log directory at {}".format(
+        config.checkpoint_dir))
+    tf.io.gfile.rmtree(config.checkpoint_dir)
+  tf.io.gfile.makedirs(config.checkpoint_dir)
 
-    tf.set_random_seed(config.seed)
-    saver = tf.train.Saver()
-    sess.run(tf.global_variables_initializer())
+  if debug:
+    train_input_fn, eval_input_fn = build_fake_input_fns(config)
+  else:
+    train_input_fn, eval_input_fn = build_input_fns(config)
 
-    writer = tf.summary.FileWriter(config.log_dir, sess.graph)
+  estimator = tf.estimator.Estimator(
+    model_fn,
+    params=config,
+    config=tf.estimator.RunConfig(
+      model_dir=config.checkpoint_dir,
+      save_checkpoints_steps=config.viz_steps,
+    ),
+  )
 
-    train_handle = sess.run(train_iterator.string_handle())
-    val_handle = sess.run(val_iterator.string_handle())
-
-    train_op = tf.train.AdamOptimizer(learning_rate=config.lr).minimize(loss)
-
-    for global_step in tqdm(range(config.train_steps)):
-
-      loss, train_op = sess.run([loss, train_op], feed_dict={handle: train_handle})
-
-      if global_step % config.save_summary_period == 0:
-        pass
-
-        writer.flush()
-
-      if global_step % config.save_model_period == 0:
-        pass
-
-    writer.close()
+  for _ in range(config.train_steps // config.viz_steps):
+    estimator.train(train_input_fn, steps=config.viz_steps)
+    eval_results = estimator.evaluate(eval_input_fn)
+    print("Evaluation_results:\n\t%s\n" % eval_results)
 
 
 def evaluate(config):

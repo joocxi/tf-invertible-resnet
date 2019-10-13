@@ -1,5 +1,5 @@
 # Invertible Residual Networks in TensorFlow
-A TensorFlow implementation of [Invertible Residual Networks](https://arxiv.org/abs/1811.00995)
+A TensorFlow implementation of [Invertible Residual Networks](https://arxiv.org/pdf/1811.00995.pdf)
 
 ## Installation
 First, we need to create our Python `3.6` virtual environment using `virtualenv` and install all necessary packages stored in `requirements.txt`
@@ -11,11 +11,11 @@ pip install -r requirements.txt
 ```
 
 ## Running
-To test loading dataset 
+To prepare dataset 
 ```bash
 python main.py --mode data --dataset <dataset-name>
 ```
-To test spectral normalization implementation
+To test spectral normalization
 ```bash
 python main.py --mode sn
 ```
@@ -29,12 +29,24 @@ To test block inversion
 ```bash
 python main.py --mode inverse
 ```
+
+To test invertible residual net forward pass
+```bash
+python main.py --mode iresnet
+```
+
+To test training pipeline
+```bash
+python main.py --mode debug
+```
+
 ## TODOs
 - [x] General architecture
 - [x] Spectral norm
 - [x] Trace approximation
-- [ ] Loss functions
-- [ ] Training/testing pipeline
+- [x] Block inversion
+- [x] Loss functions
+- [x] Training pipeline
 - [ ] Dimension splitting
 - [ ] Actnorm (optional)
 - [ ] To TensorFlow 2.0
