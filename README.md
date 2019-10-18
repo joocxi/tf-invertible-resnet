@@ -35,6 +35,11 @@ To test invertible residual net forward pass
 python main.py --mode iresnet
 ```
 
+To test squeeze layer (invertible downsampling)
+```bash
+python main.py --mode squeeze
+```
+
 To test training pipeline
 ```bash
 python main.py --mode debug

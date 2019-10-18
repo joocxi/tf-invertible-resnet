@@ -6,7 +6,7 @@ import tensorflow.compat.v1 as tf
 
 from utils import train, download_dataset
 from test import test_spectral_norm, test_trace_approximation,\
-  test_block_inversion, test_iresnet
+  test_block_inversion, test_iresnet, test_squeeze
 
 flags = tf.flags
 
@@ -62,6 +62,8 @@ def main(_):
     test_trace_approximation()
   elif config.mode == "inverse":
     test_block_inversion()
+  elif config.mode == "squeeze":
+    test_squeeze()
 
 
 if __name__ == "__main__":

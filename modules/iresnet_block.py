@@ -34,7 +34,7 @@ class InvertibleBlock:
     :param use_actnorm:
     """
 
-    batch_size, height, width, in_channel = in_shape
+    batch_size, height, width, channels = in_shape
 
     self.num_trace_samples = num_trace_samples
     self.num_series_terms = num_series_terms
@@ -42,7 +42,7 @@ class InvertibleBlock:
     self.layers = []
     self.layers.append(Conv2D(name="a",
                               in_shape=in_shape,
-                              in_channel=in_channel, # data_channel
+                              in_channel=channels,
                               out_channel=num_channel, # intermediate channels
                               kernel_size=3,
                               use_sn=use_sn,
@@ -64,7 +64,7 @@ class InvertibleBlock:
     self.layers.append(Conv2D(name="c",
                               in_shape=int_shape,
                               in_channel=num_channel,
-                              out_channel=in_channel,
+                              out_channel=channels,
                               kernel_size=3,
                               use_sn=use_sn,
                               coeff=coeff,
