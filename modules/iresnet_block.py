@@ -5,6 +5,7 @@ from __future__ import print_function
 import tensorflow.compat.v1 as tf
 
 from modules.conv2d import Conv2D
+from modules.squeeze import Squeeze
 
 
 class InvertibleBlock:
@@ -34,10 +35,16 @@ class InvertibleBlock:
     :param use_actnorm:
     """
 
-    batch_size, height, width, channels = in_shape
-
     self.num_trace_samples = num_trace_samples
     self.num_series_terms = num_series_terms
+
+    if stride == 2:
+      self.squeeze = Squeeze(in_shape, stride)
+      in_shape = self.squeeze.out_shape # update in_shape after squeezing
+    else:
+      self.squeeze = None
+
+    batch_size, height, width, channels = in_shape
 
     self.layers = []
     self.layers.append(Conv2D(name="a",
@@ -88,6 +95,9 @@ class InvertibleBlock:
     :return trace: (batch_size,)
     """
 
+    if self.squeeze is not None:
+      x = self.squeeze(x)
+
     Gx = self.residual_block(x)
 
     trace = self.compute_trace(x, Gx,
@@ -103,6 +113,9 @@ class InvertibleBlock:
     x = out
     for i in range(fixed_point_iter):
       x = out - self.residual_block(x)
+
+    if self.squeeze is not None:
+      return self.squeeze.inverse(x)
 
     return x
 

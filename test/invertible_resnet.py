@@ -13,7 +13,7 @@ def test_iresnet():
   np.random.seed(2019)
 
   batch_size = 2
-  input_size = 7
+  input_size = 8
   channels = 3
 
   input_shape = (batch_size, input_size, input_size, channels)
@@ -23,7 +23,7 @@ def test_iresnet():
   net = IResNet(
     in_shape=input_shape,
     block_list=[1, 2, 3],
-    stride_list=[1, 1, 1],
+    stride_list=[1, 2, 2],
     channel_list=[2, 3, 5],
     num_trace_samples=4,
     num_series_terms=3,

@@ -67,8 +67,8 @@ def spectral_norm_conv(w,
   :param w: conv weight of shape (k_height, k_width, c_in, c_out)
   :param coeff:
   :param power_iter:
-  :param in_shape: (batch_size, width, height, in_channels)
-  :param out_shape: (batch_size, width, height, out_channels)
+  :param in_shape: (batch_size, height, width, in_channels)
+  :param out_shape: (batch_size, height, width, out_channels)
   :param stride:
   :param padding:
   :param debug:
@@ -85,7 +85,7 @@ def spectral_norm_conv(w,
   v_normed = None
 
   for i in range(power_iter):
-    # shape: (batch_size, width, height, in_channels)
+    # shape: (batch_size, height, width, in_channels)
     v = tf.nn.conv2d_transpose(u_normed,
                                filter=w,
                                output_shape=in_shape,
@@ -94,7 +94,7 @@ def spectral_norm_conv(w,
     v_normed = tf.math.l2_normalize(tf.reshape(v, [1, -1]))
     v_normed = tf.reshape(v_normed, v.shape)
 
-    # shape: (batch_size, width, height, out_channels)
+    # shape: (batch_size, height, width, out_channels)
     u = tf.nn.conv2d(v_normed,
                      filter=w,
                      strides=stride,

@@ -5,7 +5,6 @@ from __future__ import print_function
 import numpy as np
 import tensorflow.compat.v1 as tf
 
-
 from modules import InvertibleBlock
 
 
@@ -52,7 +51,7 @@ def test_block_inversion():
   num_channel = 3
   block = InvertibleBlock(
     in_shape=(batch_size, height, width, num_channel),
-    stride=None,
+    stride=2,
     num_channel=num_channel, # channel of intermediate layers
     coeff=0.97,
     power_iter=1,

@@ -14,7 +14,7 @@ class Squeeze:
                factor=2):
     self.factor = factor
     self.in_shape = in_shape
-    self.out_shape = self.get_outshape()
+    self.out_shape = self.get_outshape(in_shape, factor)
 
   def __call__(self, x):
     """
@@ -44,6 +44,7 @@ class Squeeze:
 
     return x
 
-  def get_outshape(self):
-    batch_size, height, width, channels = self.in_shape
-    return batch_size, height // self.factor, width // self.factor, channels * self.factor**2
+  @staticmethod
+  def get_outshape(in_shape, factor):
+    batch_size, height, width, channels = in_shape
+    return batch_size, height // factor, width // factor, channels * factor**2

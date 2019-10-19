@@ -6,7 +6,7 @@ import tensorflow.compat.v1 as tf
 import tensorflow_probability as tfp
 import numpy as np
 
-from modules import InvertibleBlock
+from modules import InvertibleBlock, Squeeze
 
 
 class IResNet:
@@ -18,7 +18,8 @@ class IResNet:
                num_trace_samples,
                num_series_terms,
                coeff,
-               power_iter):
+               power_iter,
+               init_squeeze=True):
     """
 
     :param in_shape: (batch_size, height, width, in_channel)
@@ -38,15 +39,20 @@ class IResNet:
     self.num_series_terms = num_series_terms
     self.in_shape = in_shape
 
+    if init_squeeze:
+      self.squeeze = Squeeze(in_shape, 2)
+      in_shape = self.squeeze.out_shape # update in_shape after squeezing
+    else:
+      self.squeeze = None
+
     self.blocks = []
     for idx, (num_block, stride, num_channel) in \
         enumerate(zip(block_list, stride_list, channel_list)):
       with tf.variable_scope('stack%d' % (idx + 1)):
-        self.create_stack(num_block, stride, num_channel, in_shape)
+        in_shape = self.create_stack(num_block, stride, num_channel, in_shape)
 
-    # TODO:
-    in_dim = np.prod(in_shape[1:])
-    self.batch_size = in_shape[0]
+    in_dim = np.prod(self.in_shape[1:])
+    self.batch_size = self.in_shape[0]
 
     with tf.variable_scope('prior'):
       loc = tf.get_variable("loc", shape=[in_dim], initializer=tf.constant_initializer(0))
@@ -54,6 +60,9 @@ class IResNet:
       self.prior = tfp.distributions.Normal(loc=loc, scale=tf.exp(log_scale))
 
   def __call__(self, x):
+
+    if self.squeeze is not None:
+      x = self.squeeze(x)
 
     z = x
     traces = []
@@ -76,6 +85,10 @@ class IResNet:
 
     for block in reversed(self.blocks):
       x = block.inverse(x)
+
+    if self.squeeze is not None:
+      return self.squeeze.inverse(x)
+
     return x
 
   def create_stack(self,
@@ -86,13 +99,18 @@ class IResNet:
 
     for idx in range(num_block):
       with tf.variable_scope('block%d' % (idx + 1)):
+        block_stride = stride if idx == 0 else 1 # apply stride only to the first block of each stacks
         self.blocks.append(InvertibleBlock(in_shape,
-                                           stride,
+                                           block_stride,
                                            num_channel,
                                            self.coeff,
                                            self.power_iter,
                                            self.num_trace_samples,
                                            self.num_series_terms))
+        if block_stride == 2:
+          in_shape = Squeeze.get_outshape(in_shape, stride)
+
+    return in_shape
 
   def log_prob(self, z):
 
