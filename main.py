@@ -51,6 +51,7 @@ def main(_):
     config.viz_steps = 1
     config.block_list = [2, 2, 2]
     config.channel_list = [3, 4, 5]
+    config.stride_list = [1, 1, 2]
     train(config, debug=True)
   elif config.mode == "prepare":
     download_dataset(config)
