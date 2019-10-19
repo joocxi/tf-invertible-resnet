@@ -1,5 +1,5 @@
 # Invertible Residual Networks in TensorFlow
-A TensorFlow implementation of [Invertible Residual Networks](https://arxiv.org/pdf/1811.00995.pdf)
+A TensorFlow implementation of [Invertible Residual Networks](https://arxiv.org/pdf/1811.00995.pdf), a residual networks family that can be made invertible by enforcing the Lipschitz constants of their residual blocks.
 
 ## Installation
 First, we need to create our Python `3.6` virtual environment using `virtualenv` and install all necessary packages stored in `requirements.txt`
@@ -10,11 +10,7 @@ source .env/bin/activate
 pip install -r requirements.txt
 ```
 
-## Running
-To prepare dataset 
-```bash
-python main.py --mode prepare --dataset <dataset-name>
-```
+## Debugging
 To test spectral normalization
 ```bash
 python main.py --mode sn
@@ -45,6 +41,18 @@ To test training pipeline
 python main.py --mode debug
 ```
 
+## How to run
+
+To prepare dataset 
+```bash
+python main.py --mode prepare --dataset <dataset-name>
+```
+
+To train
+```bash
+# TODO
+```
+
 ## TODOs
 - [x] General architecture
 - [x] Spectral norm
@@ -60,3 +68,5 @@ python main.py --mode debug
 - [ ] To TensorFlow 2.0
 
 **References**
+
+J. Behrmann, D. Duvenaud, and J.-H. Jacobsen. Invertible residual networks.
