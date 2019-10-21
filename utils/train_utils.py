@@ -12,7 +12,7 @@ from utils.data_utils import build_input_fns, build_fake_input_fns
 def model_fn(features, labels, mode, params, config):
   del labels, config
 
-  model = IResNet(in_shape= (32, 28, 28, 1),
+  model = IResNet(in_shape=params.in_shape,
                   block_list=params.block_list,
                   stride_list=params.stride_list,
                   channel_list=params.channel_list,

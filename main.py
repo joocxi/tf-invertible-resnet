@@ -27,6 +27,7 @@ flags.DEFINE_integer("train_steps", 10000, "Num training steps")
 flags.DEFINE_integer("viz_steps", 50, "Num steps at which do visualization")
 
 # invertible residual network config
+flags.DEFINE_list("in_shape", [], "Input shape")
 flags.DEFINE_list("block_list", [7, 7, 7], "Block list")
 flags.DEFINE_list("stride_list", [1, 2, 2], "Stride list")
 flags.DEFINE_list("channel_list", [32, 64, 128], "Channel list")
@@ -45,6 +46,9 @@ flags.DEFINE_bool("delete_existing", True, "")
 def main(_):
   config = flags.FLAGS
   if config.mode == "train":
+    assert config.dataset in ("mnist", "cifar10")
+    config.in_shape = (config.batch_size, 32, 32, 3)
+
     train(config)
   elif config.mode == "debug":
     config.train_steps = 1
@@ -52,6 +56,7 @@ def main(_):
     config.block_list = [2, 2, 2]
     config.channel_list = [3, 4, 5]
     config.stride_list = [1, 1, 2]
+    config.in_shape = (config.batch_size, 28, 28, 1)
     train(config, debug=True)
   elif config.mode == "prepare":
     download_dataset(config)
