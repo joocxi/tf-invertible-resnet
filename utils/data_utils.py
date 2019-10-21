@@ -57,7 +57,7 @@ def build_input_fns(config):
 
   def eval_input_fn():
     dataset = tfds.load(config.dataset, split="test", data_dir=config.data_dir)
-    dataset = dataset.map(lambda x: test_transform(x, config)).batch(config.batch_size)
+    dataset = dataset.map(lambda x: test_transform(x, config)).batch(config.batch_size, drop_remainder=True)
     return tf.data.make_one_shot_iterator(dataset).get_next()
 
   return train_input_fn, eval_input_fn
