@@ -6,7 +6,7 @@ import tensorflow.compat.v1 as tf
 
 from utils import train, download_dataset
 from test import test_spectral_norm, test_trace_approximation,\
-  test_block_inversion, test_iresnet, test_squeeze
+  test_block_inversion, test_iresnet, test_squeeze, test_trace_sn
 
 flags = tf.flags
 
@@ -23,8 +23,10 @@ flags.DEFINE_integer("batch_size", 32, "Batch size")
 flags.DEFINE_integer("epochs", 10, "Num epochs")
 flags.DEFINE_float("learning_rate", 3e-4, "Learning rate")
 flags.DEFINE_float('weight_decay', 5e-4, "Coefficient for weight decay")
-flags.DEFINE_integer("train_steps", 10000, "Num training steps")
-flags.DEFINE_integer("viz_steps", 50, "Num steps at which do visualization")
+flags.DEFINE_integer("train_steps", 100000, "Num training steps")
+flags.DEFINE_integer("viz_steps", 5000, "Num steps at which do visualization")
+flags.DEFINE_integer("log_steps", 50, "Num steps to print out loss")
+
 
 # invertible residual network config
 flags.DEFINE_list("in_shape", [], "Input shape")
@@ -48,6 +50,9 @@ def main(_):
   if config.mode == "train":
     assert config.dataset in ("mnist", "cifar10")
     config.in_shape = (config.batch_size, 32, 32, 3)
+    config.block_list = [eval(x) for x in config.block_list]
+    config.stride_list = [eval(x) for x in config.stride_list]
+    config.channel_list = [eval(x) for x in config.channel_list]
 
     train(config)
   elif config.mode == "debug":
@@ -70,6 +75,8 @@ def main(_):
     test_block_inversion()
   elif config.mode == "squeeze":
     test_squeeze()
+  elif config.mode == "trace_sn":
+    test_trace_sn()
 
 
 if __name__ == "__main__":

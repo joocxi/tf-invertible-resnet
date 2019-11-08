@@ -78,7 +78,7 @@ class IResNet:
 
     loss = - log_prob_x / float(np.log(2.) * np.prod(self.in_shape[1:])) + 8
 
-    return z, tf.reduce_mean(loss)
+    return tf.reduce_mean(log_prob_z), tf.reduce_mean(trace), tf.reduce_mean(loss)
 
   def inverse(self, out):
     x = out

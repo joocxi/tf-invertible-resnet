@@ -21,7 +21,7 @@ def model_fn(features, labels, mode, params, config):
                   coeff=params.coeff,
                   power_iter=params.power_iter)
 
-  z, loss = model(features)
+  log_prob_z, trace, loss = model(features)
 
   global_step = tf.train.get_or_create_global_step()
   learning_rate = tf.train.cosine_decay(
@@ -30,10 +30,20 @@ def model_fn(features, labels, mode, params, config):
   optimizer = tf.train.AdamOptimizer(learning_rate)
   train_op = optimizer.minimize(loss, global_step=global_step)
 
+  logging_hook = tf.train.LoggingTensorHook(
+    {
+      "loss": loss,
+      "trace": trace,
+      "log_prob_z" : log_prob_z
+    },
+    every_n_iter=10
+  )
+
   return tf.estimator.EstimatorSpec(
     mode=mode,
     loss=loss,
-    train_op=train_op
+    train_op=train_op,
+    training_hooks=[logging_hook],
   )
 
 

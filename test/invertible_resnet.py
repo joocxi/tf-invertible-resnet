@@ -30,11 +30,12 @@ def test_iresnet():
     coeff=0.97,
     power_iter=2)
 
-  z, loss = net(x)
+  log_prob_z, trace, loss = net(x)
 
   sess = tf.InteractiveSession()
   sess.run(tf.global_variables_initializer())
 
-  _z, _loss = sess.run([z, loss], feed_dict={x: x_np})
+  _log_prob_z, _trace, _loss = sess.run([log_prob_z, trace, loss], feed_dict={x: x_np})
   print("Loss is: {}".format(_loss))
-  print("z's shape is: {}".format(_z.shape))
+  print("Trace is: {}".format(_trace))
+  print("Log prob is: {}".format(_log_prob_z))
