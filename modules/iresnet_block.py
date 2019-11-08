@@ -131,19 +131,27 @@ class InvertibleBlock:
     u = tf.random.normal(u_shape)
 
     def loop_trace_samples(n, trace_total):
+      """
 
+      :param n: loop over n samples
+      :param trace_total: (batch_size, )
+      :return:
+      """
+
+      # shape (batch_size, h*w*c, 1)
       u_reshaped = tf.reshape(u[..., n], (u_shape[0], -1, 1))
 
       def loop_series_terms(k, output_grads, trace):
         """
 
-        :param k:
+        :param k: loop over k terms
         :param output_grads: (batch_size, height, width, num_channel)
         :param trace: (batch_size,)
         :return:
         """
+        # shape (batch_size, height, width, num_channel)
         grads = tf.gradients(Gx, x, output_grads)[0]
-
+        # shape (batch_size, 1, h*w*c)
         grads_reshaped = tf.reshape(grads, (u_shape[0], 1, -1))
 
 
@@ -162,8 +170,36 @@ class InvertibleBlock:
     _, trace_all_samples = tf.while_loop(
       cond=lambda n, _: n < num_trace_samples,
       body=loop_trace_samples,
-      loop_vars = [tf.constant(0, dtype=tf.int32), tf.zeros(shape=u_shape[0])]
+      loop_vars = [tf.constant(0, dtype=tf.int32), tf.zeros(shape=u_shape[0])],
+      shape_invariants=[tf.TensorShape(None), tf.TensorShape([None])]
     )
 
+    # shape (batch_size, )
     trace_all_samples = trace_all_samples / num_trace_samples
+
     return trace_all_samples
+
+  @staticmethod
+  def compute_jacobian_matrix(x, Gx):
+    """
+
+    :param x: (batch_size, height, width, num_channel)
+    :param Gx: (batch_size, height, width, num_channel)
+    :return:
+    """
+
+    # (h*w*c, )
+    sum_Gx = tf.reshape(tf.reduce_sum(Gx, axis=0), [-1])
+
+    list_s = tf.split(sum_Gx, sum_Gx.shape[0])
+
+    list_grad = []
+    for i, s in enumerate(list_s):
+      # (b, h*w*c)
+      grad = tf.gradients(s, x)[0]
+      list_grad.append(grad)
+
+    # (b, h*w*c, h*w*c)
+    grads = tf.stack(list_grad, axis=1)
+
+    return grads
