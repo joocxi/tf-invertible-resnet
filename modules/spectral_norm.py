@@ -25,10 +25,11 @@ def spectral_norm(w,
 
   # init u with shape (1, c_out)
   with tf.variable_scope("norm"):
-    u_normed = tf.get_variable("u",
-                               shape=[1, w_shape[-1]],
-                               initializer=tf.truncated_normal_initializer(),
-                               trainable=False)
+    u_var = tf.get_variable("u",
+                            shape=[1, w_shape[-1]],
+                            initializer=tf.truncated_normal_initializer(),
+                            trainable=False)
+  u_normed = u_var
   v_normed = None
 
   for i in range(power_iter):
@@ -48,8 +49,9 @@ def spectral_norm(w,
   if debug:
     return sigma
 
-  factor = tf.maximum(tf.ones_like(w), sigma / coeff)
-  w_normed = w / factor
+  with tf.control_dependencies([u_var.assign(u_normed)]):
+    factor = tf.maximum(tf.ones_like(w), sigma / coeff)
+    w_normed = w / factor
 
   return w_normed
 
@@ -77,11 +79,12 @@ def spectral_norm_conv(w,
 
   # init u with shape: out_shape
   with tf.variable_scope("norm"):
-    u_normed = tf.get_variable("u_conv",
-                               shape=out_shape,
-                               initializer=tf.truncated_normal_initializer(),
-                               trainable=False)
+    u_var = tf.get_variable("u_conv",
+                            shape=out_shape,
+                            initializer=tf.truncated_normal_initializer(),
+                            trainable=False)
 
+  u_normed = u_var
   v_normed = None
 
   for i in range(power_iter):
@@ -111,14 +114,14 @@ def spectral_norm_conv(w,
                      padding=padding)
 
   v_w = tf.reshape(v_w, [1, -1])
-  u_normed = tf.reshape(u_normed, [-1, 1])
 
-  sigma = tf.matmul(v_w, u_normed)
+  sigma = tf.matmul(v_w, tf.reshape(u_normed, [-1, 1]))
 
   if debug:
     return sigma
 
-  factor = tf.maximum(tf.ones_like(w), sigma / coeff)
-  w_normed = w / factor
+  with tf.control_dependencies([u_var.assign(u_normed)]):
+    factor = tf.maximum(tf.ones_like(w), sigma / coeff)
+    w_normed = w / factor
 
   return w_normed
