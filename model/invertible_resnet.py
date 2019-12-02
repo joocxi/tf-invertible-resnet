@@ -51,12 +51,14 @@ class IResNet:
       with tf.variable_scope('stack%d' % (idx + 1)):
         in_shape = self.create_stack(num_block, stride, num_channel, in_shape)
 
-    in_dim = np.prod(self.in_shape[1:])
+    self.z_shape = in_shape
+
+    z_dim = np.prod(self.z_shape[1:])
     self.batch_size = self.in_shape[0]
 
     with tf.variable_scope('prior'):
-      loc = tf.get_variable("loc", shape=[in_dim], initializer=tf.constant_initializer(0))
-      log_scale = tf.get_variable("scale", shape=[in_dim], initializer=tf.constant_initializer(0))
+      loc = tf.get_variable("loc", shape=[z_dim], initializer=tf.constant_initializer(0))
+      log_scale = tf.get_variable("scale", shape=[z_dim], initializer=tf.constant_initializer(0))
       self.prior = tfp.distributions.Normal(loc=loc, scale=tf.exp(log_scale))
 
   def __call__(self, x):
@@ -78,7 +80,7 @@ class IResNet:
 
     loss = - log_prob_x / float(np.log(2.) * np.prod(self.in_shape[1:])) + 8
 
-    return tf.reduce_mean(log_prob_z), tf.reduce_mean(trace), tf.reduce_mean(loss)
+    return z, tf.reduce_mean(log_prob_z), tf.reduce_mean(trace), tf.reduce_mean(loss)
 
   def inverse(self, out):
     x = out
@@ -118,3 +120,11 @@ class IResNet:
     log_prob = self.prior.log_prob(z_reshaped)
     log_prob = tf.reduce_sum(log_prob, axis=-1)
     return log_prob
+
+  def sample(self, num_samples):
+
+    z = self.prior.sample([num_samples])
+    z = tf.reshape(z, [num_samples] + self.z_shape[1:])
+    x = self.inverse(z)
+
+    return x

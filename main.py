@@ -4,7 +4,7 @@ from __future__ import print_function
 
 import tensorflow.compat.v1 as tf
 
-from utils import train, download_dataset
+from utils import train, download_dataset, generate, reconstruct
 from test import test_spectral_norm, test_trace_approximation,\
   test_block_inversion, test_iresnet, test_squeeze, test_trace_sn
 
@@ -77,6 +77,10 @@ def main(_):
     test_squeeze()
   elif config.mode == "trace_sn":
     test_trace_sn()
+  elif config.mode == "generate":
+    generate(config)
+  elif config.mode == "reconstruct":
+    reconstruct(config)
 
 
 if __name__ == "__main__":

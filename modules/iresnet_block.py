@@ -109,7 +109,7 @@ class InvertibleBlock:
     else:
       return x + Gx, trace
 
-  def inverse(self, out, fixed_point_iter=100):
+  def inverse(self, out, fixed_point_iter=10):
     x = out
     for i in range(fixed_point_iter):
       x = out - self.residual_block(x)

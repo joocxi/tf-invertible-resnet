@@ -22,20 +22,23 @@ def test_iresnet():
 
   net = IResNet(
     in_shape=input_shape,
-    block_list=[1, 2, 3],
+    block_list=[32, 32, 32], #[1, 2, 3],
     stride_list=[1, 2, 2],
-    channel_list=[2, 3, 5],
+    channel_list=[32, 32, 32],#[2, 3, 5],
     num_trace_samples=4,
     num_series_terms=3,
     coeff=0.97,
     power_iter=2)
 
-  log_prob_z, trace, loss = net(x)
+  log_prob_z, trace, loss, z = net(x)
+  a = net.inverse(z)
 
   sess = tf.InteractiveSession()
   sess.run(tf.global_variables_initializer())
 
-  _log_prob_z, _trace, _loss = sess.run([log_prob_z, trace, loss], feed_dict={x: x_np})
+  _log_prob_z, _trace, _loss, _z, _a = sess.run([log_prob_z, trace, loss, z, a], feed_dict={x: x_np})
   print("Loss is: {}".format(_loss))
   print("Trace is: {}".format(_trace))
   print("Log prob is: {}".format(_log_prob_z))
+  print("z shape is: {}".format(z.shape))
+  print("a shape is {}".format(a.shape))

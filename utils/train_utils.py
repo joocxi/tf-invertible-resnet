@@ -2,8 +2,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import os
 
+import numpy as np
 import tensorflow.compat.v1 as tf
+
+from PIL import Image
 
 from model import IResNet
 from utils.data_utils import build_input_fns, build_fake_input_fns
@@ -21,7 +25,21 @@ def model_fn(features, labels, mode, params, config):
                   coeff=params.coeff,
                   power_iter=params.power_iter)
 
-  log_prob_z, trace, loss = model(features)
+  if params.mode == "generate":
+    predictions = model.sample(params.batch_size)
+    return tf.estimator.EstimatorSpec(
+      mode=mode,
+      predictions=predictions
+    )
+
+  z, log_prob_z, trace, loss = model(features)
+
+  if params.mode == "reconstruct":
+    predictions = model.inverse(z)
+    return tf.estimator.EstimatorSpec(
+      mode=mode,
+      predictions=predictions
+    )
 
   global_step = tf.train.get_or_create_global_step()
   learning_rate = tf.train.cosine_decay(
@@ -75,5 +93,48 @@ def train(config, debug=False):
     print("Evaluation_results:\n\t%s\n" % eval_results)
 
 
-def evaluate(config):
-  pass
+def generate(config):
+  gen_dir = "generated"
+  if not os.path.exists(gen_dir):
+    os.mkdir(gen_dir)
+
+  estimator = tf.estimator.Estimator(
+    model_fn,
+    params=config,
+    model_dir=config.checkpoint_dir
+  )
+
+  _, input_fn = build_fake_input_fns(config)
+  for pred in estimator.predict(input_fn, yield_single_examples=False):
+    for i in range(config.batch_size):
+      arr = pred[i]
+      arr = np.clip(arr, -0.5, 0.5)
+      arr = arr + 0.5
+      arr = (arr * 255).astype("uint8")
+      im = Image.fromarray(arr)
+      im.save(os.path.join(gen_dir, "image_{}.png".format(i)))
+    break
+
+
+def reconstruct(config):
+  res_folder = "reconstructed"
+  if not os.path.exists(res_folder):
+    os.mkdir(res_folder)
+
+  estimator = tf.estimator.Estimator(
+    model_fn,
+    params = config,
+    model_dir = config.checkpoint_dir
+  )
+
+  _, input_fn = build_input_fns(config)
+
+  for pred in estimator.predict(input_fn, yield_single_examples=False):
+    for i in range(config.batch_size):
+      arr = pred[i]
+      arr = np.clip(arr, -0.5, 0.5)
+      arr = arr + 0.5
+      arr = (arr * 255).astype("uint8")
+      im = Image.fromarray(arr)
+      im.save(os.path.join(res_folder, "image_{}.png".format(i)))
+    break
